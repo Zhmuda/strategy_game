@@ -16,10 +16,10 @@ export default defineConfig({
       }
     }
   },
-  // Добавьте эту секцию для продакшена
   build: {
     outDir: 'dist',
     sourcemap: false,
+    // terser будет установлен, можно оставить
     minify: 'terser',
     rollupOptions: {
       output: {
@@ -29,7 +29,6 @@ export default defineConfig({
       }
     }
   },
-  // Важно: для корректной работы на Vercel
   preview: {
     port: 3000
   }
