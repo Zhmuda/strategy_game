@@ -15,7 +15,22 @@ export default defineConfig({
         ws: true
       }
     }
+  },
+  // Добавьте эту секцию для продакшена
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'axios']
+        }
+      }
+    }
+  },
+  // Важно: для корректной работы на Vercel
+  preview: {
+    port: 3000
   }
 })
-
-
