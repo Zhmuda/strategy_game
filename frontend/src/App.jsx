@@ -11,6 +11,8 @@ console.log('Config imported:', { API_URL, WS_URL })
 
 function App() {
   console.log('App component rendering...')
+  console.log('API_URL:', API_URL, 'WS_URL:', WS_URL)
+  
   const [gameState, setGameState] = useState('lobby') // 'lobby', 'room', 'game'
   const [roomCode, setRoomCode] = useState(null)
   const [playerId, setPlayerId] = useState(null)
@@ -23,25 +25,61 @@ function App() {
   })
 
   useEffect(() => {
-    // Проверка подключения к бэкенду
+    // Проверка подключения к бэкенду (не блокируем рендеринг)
     console.log('App mounted, API_URL:', API_URL)
     
-    // Проверка API
-    fetch(`${API_URL}/api/test`)
-      .then(res => res.json())
+    // Устанавливаем начальный статус без ошибки, чтобы приложение загрузилось
+    setConnectionStatus(prev => ({ ...prev, api: 'checking', backendUrl: API_URL }))
+    
+    // Проверка API с таймаутом
+    const apiTimeout = setTimeout(() => {
+      setConnectionStatus(prev => {
+        if (prev.api === 'checking') {
+          return { ...prev, api: 'timeout' }
+        }
+        return prev
+      })
+    }, 10000) // 10 секунд таймаут
+    
+    // Используем AbortController для совместимости
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+    
+    fetch(`${API_URL}/api/test`, { 
+      signal: controller.signal
+    })
+      .then(res => {
+        clearTimeout(timeoutId)
+        clearTimeout(apiTimeout)
+        return res.json()
+      })
       .then(data => {
         console.log('Backend connection OK:', data)
         setConnectionStatus(prev => ({ ...prev, api: 'connected', backendData: data }))
         setError(null)
       })
       .catch(err => {
+        clearTimeout(timeoutId)
+        clearTimeout(apiTimeout)
         console.error('Backend connection failed:', err)
-        setConnectionStatus(prev => ({ ...prev, api: 'failed', error: err.message }))
-        setError(`Не удалось подключиться к серверу: ${API_URL}. Проверьте настройки.`)
+        if (err.name === 'AbortError') {
+          setConnectionStatus(prev => ({ ...prev, api: 'timeout' }))
+        } else {
+          setConnectionStatus(prev => ({ ...prev, api: 'failed', error: err.message }))
+        }
+        // Не устанавливаем error, чтобы приложение все равно работало
       })
 
-    // Проверка WebSocket
-    testWebSocket()
+    // Проверка WebSocket (не блокируем рендеринг)
+    setTimeout(() => {
+      testWebSocket()
+    }, 1000) // Запускаем через секунду после загрузки
+    
+    return () => {
+      clearTimeout(timeoutId)
+      clearTimeout(apiTimeout)
+      controller.abort()
+    }
   }, [])
 
   const testWebSocket = () => {
@@ -121,19 +159,21 @@ function App() {
 
   return (
     <div className="App">
-      {/* Панель диагностики подключения */}
+      {/* Панель диагностики подключения - показываем только если не подключено */}
+      {(connectionStatus.api !== 'connected' || connectionStatus.websocket !== 'connected') && (
       <div style={{
         position: 'fixed',
         top: '10px',
         right: '10px',
-        background: 'rgba(0,0,0,0.8)',
+        background: 'rgba(0,0,0,0.85)',
         color: 'white',
         padding: '10px 15px',
         borderRadius: '8px',
         fontSize: '12px',
         zIndex: 10000,
         minWidth: '250px',
-        fontFamily: 'monospace'
+        fontFamily: 'monospace',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
       }}>
         <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>🔌 Статус подключения</div>
         <div style={{ marginBottom: '5px' }}>
@@ -183,60 +223,60 @@ function App() {
           🔄 Обновить
         </button>
       </div>
-
-      {error && (
-        <div style={{ 
-          padding: '20px', 
-          textAlign: 'center', 
-          background: '#ffebee', 
-          color: '#c62828',
-          margin: '20px',
-          borderRadius: '8px'
-        }}>
-          <h2>⚠️ Ошибка подключения</h2>
-          <p>{error}</p>
-          <div style={{ marginTop: '15px', fontSize: '14px', background: 'white', padding: '10px', borderRadius: '4px' }}>
-            <strong>Диагностика:</strong><br/>
-            API URL: {API_URL}<br/>
-            Статус API: {connectionStatus.api}<br/>
-            Статус WebSocket: {connectionStatus.websocket}
-          </div>
-          <button 
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: '15px',
-              padding: '10px 20px',
-              background: '#667eea',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
-          >
-            Перезагрузить
-          </button>
-        </div>
       )}
 
-      {!error && (
-        <>
-          {gameState === 'lobby' && (
-            <Lobby
-              onCreateRoom={handleCreateRoom}
-              onJoinRoom={handleJoinRoom}
-            />
-          )}
-          {(gameState === 'room' || gameState === 'game') && (
-            <GameRoom
-              roomCode={roomCode}
-              playerId={playerId}
-              playerName={playerName}
-              onGameStart={handleGameStart}
-              onBackToLobby={handleBackToLobby}
-            />
-          )}
-        </>
+      {/* Всегда показываем интерфейс, даже если есть ошибки подключения */}
+      {gameState === 'lobby' && (
+        <Lobby
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
+        />
+      )}
+      {(gameState === 'room' || gameState === 'game') && (
+        <GameRoom
+          roomCode={roomCode}
+          playerId={playerId}
+          playerName={playerName}
+          onGameStart={handleGameStart}
+          onBackToLobby={handleBackToLobby}
+        />
+      )}
+      
+      {/* Показываем предупреждение, если есть проблемы с подключением, но не блокируем интерфейс */}
+      {error && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#ff9800',
+          color: 'white',
+          padding: '15px 25px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 10001,
+          maxWidth: '90%',
+          textAlign: 'center'
+        }}>
+          <strong>⚠️ Проблема с подключением к серверу</strong>
+          <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>{error}</p>
+          <button 
+            onClick={() => {
+              setError(null)
+            }}
+            style={{
+              marginTop: '10px',
+              padding: '5px 15px',
+              background: 'white',
+              color: '#ff9800',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Закрыть
+          </button>
+        </div>
       )}
     </div>
   )
