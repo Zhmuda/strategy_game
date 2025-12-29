@@ -5,7 +5,7 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "dist"
       }
     }
   ],
@@ -15,9 +15,7 @@
       "dest": "/"
     }
   ],
-  "build": {
-    "env": {
-      "REACT_APP_BACKEND_URL": "https://strategy-game-pvnb.onrender.com"
-    }
+  "env": {
+    "REACT_APP_BACKEND_URL": "https://strategy-game-pvnb.onrender.com"
   }
 }
