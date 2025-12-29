@@ -48,5 +48,7 @@ Thumbs.db
 # Environment
 .env
 .env.local
+frontend/.env
+frontend/.env.local
 
 

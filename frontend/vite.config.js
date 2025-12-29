@@ -7,11 +7,11 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:8000',
         changeOrigin: true
       },
       '/ws': {
-        target: 'ws://localhost:8000',
+        target: process.env.VITE_BACKEND_URL?.replace('https://', 'wss://').replace('http://', 'ws://') || 'ws://localhost:8000',
         ws: true
       }
     }
@@ -19,7 +19,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // terser будет установлен, можно оставить
     minify: 'terser',
     rollupOptions: {
       output: {
@@ -27,9 +26,17 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'axios']
         }
       }
+    },
+    // Убеждаемся, что все файлы правильно обрабатываются
+    commonjsOptions: {
+      include: [/node_modules/]
     }
   },
   preview: {
     port: 3000
+  },
+  // Убеждаемся, что переменные окружения доступны
+  define: {
+    'process.env': {}
   }
 })
