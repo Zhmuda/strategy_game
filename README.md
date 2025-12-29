@@ -29,6 +29,32 @@ npm run dev
 
 Frontend будет доступен на `http://localhost:3000`
 
+**Важно**: Для работы в локальной разработке создайте файл `.env` в папке `frontend`:
+```
+VITE_BACKEND_URL=http://localhost:8000
+```
+
+## Деплой
+
+### Backend (Render)
+
+1. Подключите репозиторий к Render
+2. Настройки:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python main.py`
+   - **Environment Variables**:
+     - `ALLOWED_ORIGINS`: `https://strategy-game-4jwu.vercel.app,http://localhost:3000,http://localhost:5173`
+
+### Frontend (Vercel)
+
+1. Подключите репозиторий к Vercel
+2. Настройки:
+   - **Framework Preset**: Vite
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Environment Variables**:
+     - `VITE_BACKEND_URL`: `https://strategy-game-pvnb.onrender.com`
+
 ## Как играть
 
 1. Запустите backend и frontend
@@ -42,7 +68,8 @@ Frontend будет доступен на `http://localhost:3000`
 - **Ресурсы**: Золото, Дерево, Камень, Еда
 - **Армия**: Солдаты, Лучники, Кавалерия
 - **Здания**: Казармы, Фермы, Шахты, Стены
-- **Действия**: Строительство, обучение армии, атака на других игроков
+- **Технологии**: Военная тактика, Продвинутое строительство, Торговые пути, Укрепления
+- **Действия**: Строительство, обучение армии, исследования, атака, торговля
 
 ## API
 

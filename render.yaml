@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: strategy-game-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: ALLOWED_ORIGINS
+        value: https://strategy-game-4jwu.vercel.app,http://localhost:3000,http://localhost:5173
+

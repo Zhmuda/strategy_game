@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './GameRoom.css'
-
-const API_URL = 'http://localhost:8000'
-const WS_URL = 'ws://localhost:8000'
+import { API_URL, WS_URL } from '../config'
 
 function GameRoom({ roomCode, playerId, playerName, onGameStart, onBackToLobby }) {
   const [room, setRoom] = useState(null)
@@ -24,28 +22,44 @@ function GameRoom({ roomCode, playerId, playerName, onGameStart, onBackToLobby }
 
   useEffect(() => {
     // Подключение к WebSocket
-    const ws = new WebSocket(`${WS_URL}/ws/${roomCode}/${playerId}`)
-    wsRef.current = ws
+    try {
+      const ws = new WebSocket(`${WS_URL}/ws/${roomCode}/${playerId}`)
+      wsRef.current = ws
 
-    ws.onopen = () => {
-      console.log('WebSocket connected')
-    }
+      ws.onopen = () => {
+        console.log('WebSocket connected')
+        addLogMessage('Подключено к серверу', 'success')
+      }
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data)
-      handleWebSocketMessage(message)
-    }
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data)
+          handleWebSocketMessage(message)
+        } catch (err) {
+          console.error('Error parsing WebSocket message:', err)
+        }
+      }
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
-    }
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error)
+        addLogMessage('Ошибка подключения к серверу', 'warning')
+      }
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected')
-    }
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected', event.code, event.reason)
+        if (event.code !== 1000) {
+          addLogMessage('Соединение с сервером потеряно. Попробуйте перезагрузить страницу.', 'warning')
+        }
+      }
 
-    return () => {
-      ws.close()
+      return () => {
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close()
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error)
+      addLogMessage('Не удалось подключиться к серверу. Проверьте настройки.', 'warning')
     }
   }, [roomCode, playerId])
 

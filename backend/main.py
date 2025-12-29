@@ -10,9 +10,17 @@ from pydantic import BaseModel, ConfigDict
 app = FastAPI(title="Strategy Game API")
 
 # CORS для React фронтенда
+import os
+
+# Получаем разрешенные домены из переменных окружения или используем дефолтные
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,https://strategy-game-4jwu.vercel.app"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -703,5 +711,7 @@ def apply_building_effect(player: Player, building_type: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 

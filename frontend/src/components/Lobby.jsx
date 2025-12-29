@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import './Lobby.css'
-
-const API_URL = 'http://localhost:8000'
+import { API_URL } from '../config'
 
 function Lobby({ onCreateRoom, onJoinRoom }) {
   const [playerName, setPlayerName] = useState('')
