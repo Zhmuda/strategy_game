@@ -2,9 +2,15 @@ import React, { useState, useEffect } from 'react'
 import Lobby from './components/Lobby'
 import GameRoom from './components/GameRoom'
 import './App.css'
+
+console.log('App.jsx loading...')
+
+// Импорт конфигурации
 import { API_URL, WS_URL } from './config'
+console.log('Config imported:', { API_URL, WS_URL })
 
 function App() {
+  console.log('App component rendering...')
   const [gameState, setGameState] = useState('lobby') // 'lobby', 'room', 'game'
   const [roomCode, setRoomCode] = useState(null)
   const [playerId, setPlayerId] = useState(null)

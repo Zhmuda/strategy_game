@@ -4,10 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Военно-Экономическая Стратегия</title>
+    <style>
+      /* Fallback стили на случай если CSS не загрузился */
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      .loading {
+        text-align: center;
+        color: white;
+        padding: 50px;
+      }
+      .error {
+        background: #ffebee;
+        color: #c62828;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <noscript>
+      <div class="error">
+        <h1>JavaScript отключен</h1>
+        <p>Для работы приложения необходимо включить JavaScript в настройках браузера.</p>
+      </div>
+    </noscript>
+    <div id="root">
+      <div class="loading">
+        <h1>⚔️ Военно-Экономическая Стратегия</h1>
+        <p>Загрузка...</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Диагностика загрузки
+      console.log('HTML loaded');
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        const root = document.getElementById('root');
+        if (root && root.children.length === 1 && root.querySelector('.loading')) {
+          root.innerHTML = `
+            <div class="error">
+              <h1>Ошибка загрузки приложения</h1>
+              <p><strong>Ошибка:</strong> ${e.error?.message || e.message || 'Unknown error'}</p>
+              <p><strong>Файл:</strong> ${e.filename || 'Unknown'}</p>
+              <p><strong>Строка:</strong> ${e.lineno || 'Unknown'}</p>
+              <p style="font-size: 12px; margin-top: 20px;">
+                Проверьте консоль браузера (F12) для деталей.<br/>
+                API URL должен быть: ${window.location.origin.includes('vercel') ? 'https://strategy-game-pvnb.onrender.com' : 'http://localhost:8000'}
+              </p>
+              <button onclick="window.location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Перезагрузить
+              </button>
+            </div>
+          `;
+        }
+      });
+    </script>
   </body>
 </html>
 

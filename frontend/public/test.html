@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест подключения</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Тест подключения к бэкенду</h1>
+    
+    <div class="test-box">
+        <h2>Информация о фронтенде</h2>
+        <p><strong>URL:</strong> <span id="frontend-url"></span></p>
+        <p><strong>Backend URL (из env):</strong> <span id="backend-url-env"></span></p>
+        <p><strong>Backend URL (ожидаемый):</strong> https://strategy-game-pvnb.onrender.com</p>
+    </div>
+
+    <div class="test-box">
+        <h2>Тест API подключения</h2>
+        <button onclick="testAPI()">Проверить API</button>
+        <div id="api-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Тест WebSocket</h2>
+        <button onclick="testWebSocket()">Проверить WebSocket</button>
+        <div id="ws-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Проверка переменных окружения</h2>
+        <div id="env-check"></div>
+    </div>
+
+    <script>
+        // Показываем текущий URL
+        document.getElementById('frontend-url').textContent = window.location.href;
+        
+        // Проверка переменных окружения (для Vite они доступны через import.meta.env)
+        const envCheck = document.getElementById('env-check');
+        envCheck.innerHTML = `
+            <p><strong>VITE_BACKEND_URL:</strong> ${typeof import !== 'undefined' && import.meta?.env?.VITE_BACKEND_URL || 'НЕ УСТАНОВЛЕНА'}</p>
+            <p class="error">⚠️ Если переменная не установлена, добавьте её в настройках Vercel!</p>
+        `;
+        
+        const backendUrl = typeof import !== 'undefined' && import.meta?.env?.VITE_BACKEND_URL || 'https://strategy-game-pvnb.onrender.com';
+        document.getElementById('backend-url-env').textContent = backendUrl || 'НЕ УСТАНОВЛЕНА';
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p class="info">Проверка...</p>';
+            
+            const backendUrl = typeof import !== 'undefined' && import.meta?.env?.VITE_BACKEND_URL || 'https://strategy-game-pvnb.onrender.com';
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/test`);
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <p class="success">✅ API работает!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Ошибка подключения к API</p>
+                    <p>${error.message}</p>
+                    <p>URL: ${backendUrl}/api/test</p>
+                `;
+            }
+        }
+
+        function testWebSocket() {
+            const resultDiv = document.getElementById('ws-result');
+            resultDiv.innerHTML = '<p class="info">Проверка WebSocket...</p>';
+            
+            const backendUrl = typeof import !== 'undefined' && import.meta?.env?.VITE_BACKEND_URL || 'https://strategy-game-pvnb.onrender.com';
+            const wsUrl = backendUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+            
+            try {
+                const ws = new WebSocket(`${wsUrl}/ws/test/test`);
+                
+                ws.onopen = () => {
+                    resultDiv.innerHTML = '<p class="success">✅ WebSocket подключен!</p>';
+                    ws.close();
+                };
+                
+                ws.onerror = (error) => {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Ошибка WebSocket</p>
+                        <p>URL: ${wsUrl}/ws/test/test</p>
+                        <p>Возможно, Render не поддерживает WebSocket на бесплатном плане</p>
+                    `;
+                };
+                
+                ws.onclose = (event) => {
+                    if (event.code !== 1000) {
+                        resultDiv.innerHTML = `
+                            <p class="error">❌ WebSocket закрыт с кодом: ${event.code}</p>
+                            <p>Причина: ${event.reason || 'Неизвестно'}</p>
+                        `;
+                    }
+                };
+                
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.CONNECTING) {
+                        ws.close();
+                        resultDiv.innerHTML = '<p class="error">⏱️ Таймаут подключения - WebSocket может не поддерживаться</p>';
+                    }
+                }, 5000);
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Ошибка создания WebSocket</p>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        // Автоматическая проверка при загрузке
+        window.addEventListener('load', () => {
+            setTimeout(testAPI, 1000);
+        });
+    </script>
+</body>
+</html>
+
