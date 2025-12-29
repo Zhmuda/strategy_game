@@ -1,0 +1,17 @@
+{
+  "name": "strategy-game",
+  "version": "1.0.0",
+  "description": "Multiplayer strategy game",
+  "scripts": {
+    "deploy:frontend": "bash scripts/deploy-vercel.sh",
+    "deploy:backend": "bash scripts/deploy-render.sh",
+    "setup": "bash scripts/setup.sh",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python main.py",
+    "build:frontend": "cd frontend && npm install && npm run build"
+  },
+  "keywords": ["game", "strategy", "multiplayer"],
+  "author": "",
+  "license": "MIT"
+}
+

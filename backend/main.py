@@ -102,7 +102,37 @@ def create_player(player_id: str, name: str) -> Player:
 
 @app.get("/")
 async def root():
-    return {"message": "Strategy Game API"}
+    return {
+        "message": "Strategy Game API",
+        "status": "online",
+        "websocket_support": True,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/health")
+async def health_check():
+    """Проверка здоровья сервера"""
+    return {
+        "status": "healthy",
+        "websocket_support": True,
+        "active_rooms": len(game_rooms),
+        "active_connections": sum(len(conns) for conns in active_connections.values()),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/test")
+async def test_endpoint():
+    """Тестовый endpoint для проверки связи"""
+    return {
+        "message": "Backend is working!",
+        "api_url": "OK",
+        "websocket_url": "Check connection manually",
+        "timestamp": datetime.now().isoformat(),
+        "test_data": {
+            "rooms_count": len(game_rooms),
+            "connections_count": sum(len(conns) for conns in active_connections.values())
+        }
+    }
 
 @app.post("/api/create-room")
 async def create_room(player_name: str):
@@ -181,10 +211,26 @@ async def broadcast_to_room(room_code: str, message: dict):
         for conn in disconnected:
             active_connections[room_code].remove(conn)
 
+@app.websocket("/ws/test/test")
+async def websocket_test(websocket: WebSocket):
+    """Тестовый WebSocket endpoint для проверки поддержки"""
+    try:
+        await websocket.accept()
+        await websocket.send_json({"message": "WebSocket test successful", "status": "ok"})
+        await websocket.close(code=1000, reason="Test complete")
+    except Exception as e:
+        print(f"WebSocket test error: {e}")
+
 @app.websocket("/ws/{room_code}/{player_id}")
 async def websocket_endpoint(websocket: WebSocket, room_code: str, player_id: str):
     """WebSocket endpoint для игрового взаимодействия"""
     await websocket.accept()
+    
+    # Разрешаем тестовое подключение
+    if room_code == "test" and player_id == "test":
+        await websocket.send_json({"message": "Test connection successful"})
+        await websocket.close(code=1000)
+        return
     
     if room_code not in game_rooms:
         await websocket.close(code=1008, reason="Room not found")
