@@ -13,10 +13,23 @@ app = FastAPI(title="Strategy Game API")
 import os
 
 # Получаем разрешенные домены из переменных окружения или используем дефолтные
-allowed_origins = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,https://strategy-game-4jwu.vercel.app"
-).split(",")
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_env:
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+else:
+    # Дефолтные домены
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://strategy-game-4jwu.vercel.app",
+    ]
+
+# В продакшене разрешаем все origins для гибкости (можно ограничить позже)
+# Для безопасности можно установить ALLOWED_ORIGINS в переменных окружения
+allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
+
+if allow_all_origins:
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,

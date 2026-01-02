@@ -44,3 +44,8 @@ echo "1. For Vercel: Run 'bash scripts/deploy-vercel.sh'"
 echo "2. For Render: Run 'bash scripts/deploy-render.sh'"
 echo "3. Or use GitHub Actions (see .github/workflows/setup-vercel.md)"
 
+
+
+
+
+

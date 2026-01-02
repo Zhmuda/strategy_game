@@ -20,12 +20,43 @@ function Lobby({ onCreateRoom, onJoinRoom }) {
     setError('')
 
     try {
-      const response = await axios.post(`${API_URL}/api/create-room`, null, {
-        params: { player_name: playerName }
+      console.log('Creating room with API_URL:', API_URL)
+      console.log('Player name:', playerName)
+      
+      const url = `${API_URL}/api/create-room?player_name=${encodeURIComponent(playerName)}`
+      console.log('Request URL:', url)
+      
+      const response = await axios.post(url, null, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000, // 10 секунд таймаут
       })
+      
+      console.log('Room created successfully:', response.data)
       onCreateRoom(response.data.room_code, response.data.player_id, playerName)
     } catch (err) {
-      setError('Ошибка при создании комнаты: ' + (err.response?.data?.detail || err.message))
+      console.error('Error creating room:', err)
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url,
+      })
+      
+      let errorMessage = 'Ошибка при создании комнаты: '
+      if (err.response) {
+        // Сервер ответил, но с ошибкой
+        errorMessage += err.response.data?.detail || err.response.data?.message || `HTTP ${err.response.status}`
+      } else if (err.request) {
+        // Запрос отправлен, но ответа нет
+        errorMessage += 'Нет ответа от сервера. Проверьте подключение к интернету и URL бэкенда.'
+      } else {
+        // Ошибка при настройке запроса
+        errorMessage += err.message || 'Неизвестная ошибка'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -42,17 +73,40 @@ function Lobby({ onCreateRoom, onJoinRoom }) {
     setError('')
 
     try {
-      const response = await axios.post(`${API_URL}/api/join-room`, null, {
-        params: {
-          room_code: joinCode.toUpperCase(),
-          player_name: playerName
-        }
+      console.log('Joining room with API_URL:', API_URL)
+      const url = `${API_URL}/api/join-room?room_code=${encodeURIComponent(joinCode.toUpperCase())}&player_name=${encodeURIComponent(playerName)}`
+      console.log('Request URL:', url)
+      
+      const response = await axios.post(url, null, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000, // 10 секунд таймаут
       })
+      
+      console.log('Joined room successfully:', response.data)
       // Используем код комнаты из запроса или из ответа
       const roomCode = response.data.room?.code || joinCode.toUpperCase()
       onJoinRoom(roomCode, response.data.player_id, playerName)
     } catch (err) {
-      setError('Ошибка при присоединении: ' + (err.response?.data?.detail || err.message))
+      console.error('Error joining room:', err)
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url,
+      })
+      
+      let errorMessage = 'Ошибка при присоединении: '
+      if (err.response) {
+        errorMessage += err.response.data?.detail || err.response.data?.message || `HTTP ${err.response.status}`
+      } else if (err.request) {
+        errorMessage += 'Нет ответа от сервера. Проверьте подключение к интернету и URL бэкенда.'
+      } else {
+        errorMessage += err.message || 'Неизвестная ошибка'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
