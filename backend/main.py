@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional
 import uuid
@@ -147,8 +147,10 @@ async def test_endpoint():
         }
     }
 
+from fastapi import Query
+
 @app.post("/api/create-room")
-async def create_room(player_name: str):
+async def create_room(player_name: str = Query(..., description="Имя игрока")):
     """Создает новую игровую комнату"""
     room_code = generate_room_code()
     player_id = str(uuid.uuid4())

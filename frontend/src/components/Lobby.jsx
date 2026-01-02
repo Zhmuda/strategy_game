@@ -25,12 +25,17 @@ function Lobby({ onCreateRoom, onJoinRoom }) {
       
       const url = `${API_URL}/api/create-room?player_name=${encodeURIComponent(playerName)}`
       console.log('Request URL:', url)
+      console.log('API_URL from config:', API_URL)
+      console.log('Environment VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL)
       
       const response = await axios.post(url, null, {
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         timeout: 10000, // 10 секунд таймаут
+        withCredentials: false, // Отключаем credentials для избежания CORS проблем
+        validateStatus: (status) => status < 500, // Принимаем все статусы кроме 5xx
       })
       
       console.log('Room created successfully:', response.data)

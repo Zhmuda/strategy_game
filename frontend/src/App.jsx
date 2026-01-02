@@ -45,25 +45,47 @@ function App() {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 8000)
     
-    fetch(`${API_URL}/api/test`, { 
-      signal: controller.signal
+    const testUrl = `${API_URL}/api/test`
+    console.log('🔍 Testing API connection to:', testUrl)
+    console.log('🔍 API_URL value:', API_URL)
+    console.log('🔍 import.meta.env.VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL)
+    
+    fetch(testUrl, { 
+      signal: controller.signal,
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      mode: 'cors', // Явно указываем CORS режим
     })
       .then(res => {
         clearTimeout(timeoutId)
         clearTimeout(apiTimeout)
+        console.log('✅ API Response status:', res.status, res.statusText)
+        console.log('✅ API Response headers:', [...res.headers.entries()])
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+        }
         return res.json()
       })
       .then(data => {
-        console.log('Backend connection OK:', data)
+        console.log('✅ Backend connection OK:', data)
         setConnectionStatus(prev => ({ ...prev, api: 'connected', backendData: data }))
         setError(null)
       })
       .catch(err => {
         clearTimeout(timeoutId)
         clearTimeout(apiTimeout)
-        console.error('Backend connection failed:', err)
+        console.error('❌ Backend connection failed:', err)
+        console.error('❌ Error name:', err.name)
+        console.error('❌ Error message:', err.message)
+        console.error('❌ Error stack:', err.stack)
         if (err.name === 'AbortError') {
-          setConnectionStatus(prev => ({ ...prev, api: 'timeout' }))
+          console.error('⏱️ Request timeout after 8 seconds')
+          setConnectionStatus(prev => ({ ...prev, api: 'timeout', error: 'Request timeout' }))
+        } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          console.error('🌐 Network error - возможно CORS или неправильный URL')
+          setConnectionStatus(prev => ({ ...prev, api: 'failed', error: 'Network error - check CORS and backend URL' }))
         } else {
           setConnectionStatus(prev => ({ ...prev, api: 'failed', error: err.message }))
         }
